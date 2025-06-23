@@ -746,19 +746,15 @@ def HLT_load_and_inference(data, save_version=4):
 # Main
 # --------------------------------------------------------------
 
-def make_plots(data_dict, reference_data_dict, pt_thresholds=[0, 999999], require_pass_jet_trigger=False):
+def make_plots(data_dict, pt_thresholds=[0, 999999], require_pass_jet_trigger=False):
     plt.figure(figsize=(15, 8))
     data_mask = (data_dict['HLT_data'][:, 0] > pt_thresholds[0]) & (data_dict['HLT_data'][:, 0] < pt_thresholds[1])
-    reference_data_mask = (reference_data_dict['HLT_data'][:, 0] > pt_thresholds[0]) & (reference_data_dict['HLT_data'][:, 0] < pt_thresholds[1])
     bins = np.linspace(0, 50, 35)
     if require_pass_jet_trigger:
         data_mask = data_mask & (data_dict['pass_single_jet_trigger'])
         print(f"Number of data events with single jet trigger: {np.sum(data_mask)}")
-        reference_data_mask = reference_data_mask & (reference_data_dict['pass_single_jet_trigger'])
-        print(f"Number of reference data events with single jet trigger: {np.sum(reference_data_mask)}")
         bins = np.linspace(0, 50, 20)
     plt.hist(data_dict['HLTAD_scores'][data_mask], bins=bins, density=True, histtype='step', linewidth=2.5, fill=False, label='data25')
-    plt.hist(reference_data_dict['HLTAD_scores'][reference_data_mask], bins=bins, density=True, histtype='step', linewidth=2.5, fill=False, label='reference data24')
     plt.xlabel('HLT AD Score')
     plt.yscale('log')
     plt.ylabel('Density')
@@ -770,12 +766,9 @@ def make_plots(data_dict, reference_data_dict, pt_thresholds=[0, 999999], requir
 
     plt.figure(figsize=(15, 8))
     data_mask = (data_dict['L1_data'][:, 0] > pt_thresholds[0]) & (data_dict['L1_data'][:, 0] < pt_thresholds[1])
-    reference_data_mask = (reference_data_dict['L1_data'][:, 0] > pt_thresholds[0]) & (reference_data_dict['L1_data'][:, 0] < pt_thresholds[1])
     if require_pass_jet_trigger:
         data_mask = data_mask & (data_dict['pass_single_jet_trigger'])
-        reference_data_mask = reference_data_mask & (reference_data_dict['pass_single_jet_trigger'])
     plt.hist(data_dict['L1AD_scores'][data_mask], bins=bins, density=True, histtype='step', linewidth=2.5, fill=False, label='data25')
-    plt.hist(reference_data_dict['L1AD_scores'][reference_data_mask], bins=bins, density=True, histtype='step', linewidth=2.5, fill=False, label='reference data24')
     plt.xlabel('L1 AD Score')
     plt.yscale('log')
     plt.ylabel('Density')
@@ -833,7 +826,7 @@ def inference(ntuple_file):
     
 
 
-def plot(ntuple_file, pt_thresholds=[0, 999999], require_pass_jet_trigger=False):
+def plot(ntuple_file, output_dir, pt_thresholds=[0, 999999], require_pass_jet_trigger=False):
 
     # load the data
     data_dict = {}
@@ -841,18 +834,12 @@ def plot(ntuple_file, pt_thresholds=[0, 999999], require_pass_jet_trigger=False)
         for key in hf.keys():
             data_dict[key] = hf[key][:]
 
-    # load the reference data
-    reference_data_dict = {}
-    with h5py.File('/eos/home-m/mmcohen/ad_trigger_development/ops/data/ntuples/data_dict_20250515_475341.h5', 'r') as hf:
-        for key in hf.keys():
-            reference_data_dict[key] = hf[key][:]
-
     # Make the plots
-    make_plots(data_dict, reference_data_dict, pt_thresholds, require_pass_jet_trigger)
+    make_plots(data_dict, pt_thresholds, require_pass_jet_trigger)
 
     # Move the plots and data_dict to the new directory
-    run_number = data_dict['run_numbers'][0]
-    current_date = datetime.now().strftime("%Y%m%d")
-    output_dir = f"../results/{current_date}_{run_number}"
+    #run_number = data_dict['run_numbers'][0]
+    #current_date = datetime.now().strftime("%Y%m%d")
+    #output_dir = f"../results/{current_date}_{run_number}"
     os.rename('HLT_scores.png', os.path.join(output_dir, 'HLT_scores.png'))
     os.rename('L1_scores.png', os.path.join(output_dir, 'L1_scores.png'))
